@@ -5,6 +5,7 @@ target/
 .idea/
 .DS_Store
 venv/
+local_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

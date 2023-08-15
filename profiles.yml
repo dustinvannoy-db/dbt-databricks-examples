@@ -1,0 +1,40 @@
+dbt_databricks_examples:
+  target: local
+  outputs:
+    #    #run DBT locally from your IDE and execute on a SQL warehouse (https://docs.getdbt.com/reference/warehouse-setups/databricks-setup)
+    #    #Make sure you have pip install dbt-databricks in your local env
+    #    #Run the project locally with:
+    #    #DBT_DATABRICKS_HOST=xxx.cloud.databricks.com  DBT_DATABRICKS_HTTP_PATH=/sql/1.0/warehouses/xxxx DBT_DATABRICKS_TOKEN=dapixxxx dbt run
+    local:
+      type: databricks
+      catalog: field_demos
+      # schema: dv_dev2
+      schema: "{{ env_var('DBT_DATABRICKS_SCHEMA') }}"
+      host: "{{ env_var('DBT_DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH') }}" #SQL warehouse Connection details
+      token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}" # Personal Access Token (PAT)
+      threads: 3
+
+dbt_databricks_examples_python:
+  target: local
+  outputs:
+    local:
+      type: databricks
+      catalog: field_demos
+      # schema: dv_dev2
+      schema: "{{ env_var('DBT_DATABRICKS_SCHEMA') }}"
+      host: "{{ env_var('DBT_DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH_CLUSTER') }}" #Databricks All-Purpose Cluster details
+      token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}" # Personal Access Token (PAT)
+
+dbt_databricks_examples_shared_dev:
+  target: local
+  outputs:
+    local:
+      type: databricks
+      catalog: field_demos
+      schema: dv_dev
+      host: "{{ env_var('DBT_DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH') }}" #SQL warehouse Connection details
+      token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}" # Personal Access Token (PAT)
+      threads: 3

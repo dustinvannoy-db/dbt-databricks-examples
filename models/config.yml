@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: dbt_silver_nyctaxi_trip
+    columns:
+      - name: pickup_date
+        description: Date without time that trip pickup occurred (UTC).
+      - name: pickup_timestamp
+        description: Data with time that trip pickup occurred (UTC).
+
+  - name: dbt_vw_nyctaxi_trip
+    columns:
+      - name: source
+        description: Column indicating source of the data
+
+  - name: dbt_bronze_nyctaxi_pytrip
+    description: My transformation written in Python
+    config:
+      http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH_CLUSTER') }}"
+
+  - name: dbt_silver_nyctaxi_pytrip
+    description: My transformation written in Python
+    config:
+      materialized: incremental
+      tags: [ 'python' ]
+      http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH_CLUSTER') }}"
+      packages:
+        - "databricks_with_poetry"
+    columns:
+      - name: pickup_date
+        description: Date without time that trip pickup occurred (UTC).
+      - name: pickup_timestamp
+        description: Data with time that trip pickup occurred (UTC).
+
+sources:
+  - name: nyctaxi_hive_metastore
+    database: hive_metastore
+    schema: dustin_vannoy
+    tables:
+      - name: yellow_json_vw
+      - name: yellow_json_vol_vw

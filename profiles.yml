@@ -7,8 +7,7 @@ dbt_databricks_examples:
     #    #DBT_DATABRICKS_HOST=xxx.cloud.databricks.com  DBT_DATABRICKS_HTTP_PATH=/sql/1.0/warehouses/xxxx DBT_DATABRICKS_TOKEN=dapixxxx dbt run
     local:
       type: databricks
-      catalog: field_demos
-      # schema: dv_dev2
+      catalog: "{{ env_var('DBT_DATABRICKS_CATALOG') }}"
       schema: "{{ env_var('DBT_DATABRICKS_SCHEMA') }}"
       host: "{{ env_var('DBT_DATABRICKS_HOST') }}"
       http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH') }}" #SQL warehouse Connection details

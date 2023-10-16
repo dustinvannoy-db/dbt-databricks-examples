@@ -15,7 +15,11 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install typing_extensions==4.8.0 dbt-semantic-interfaces==0.2.1 dbt-databricks==1.6.5
+# MAGIC %pip install typing_extensions==4.8.0 dbt-semantic-interfaces==0.2.1 dbt-databricks==1.6.5 
+
+# COMMAND ----------
+
+# MAGIC %pip install --upgrade databricks-sdk
 
 # COMMAND ----------
 
@@ -31,15 +35,27 @@ dbutils.widgets.text("selection_logic", defaultValue="")
 
 # COMMAND ----------
 
+import os
+from databricks.sdk import WorkspaceClient
+w = WorkspaceClient()
+t = w.tokens.create(lifetime_seconds=300)
+os.environ['DBT_DATABRICKS_TOKEN'] = t.token_value
+
+# COMMAND ----------
+
 # Setup environment variables for profile. Each person could have their own single node cluster with these set or could modify profiles.yml directly in their repos folder.
 import os
 os.environ['DBT_DATABRICKS_HOST'] = dbutils.secrets.get("db-field-eng", "dustin-secret2")
-os.environ['DBT_DATABRICKS_TOKEN'] = dbutils.secrets.get("db-field-eng", "dustin-secret")
+# os.environ['DBT_DATABRICKS_TOKEN'] = dbutils.secrets.get("db-field-eng", "dustin-secret")
 os.environ['DBT_DATABRICKS_HTTP_PATH'] = dbutils.secrets.get("db-field-eng", "dustin-secret3")
-os.environ['DBT_DATABRICKS_HTTP_PATH_CLUSTER'] = 'sql/protocolv1/o/1444828305810485/0117-193614-80upfngj'
+os.environ['DBT_DATABRICKS_HTTP_PATH_CLUSTER'] = dbutils.secrets.get("db-field-eng", "dustin-secret4")
+
+# TODO: Put the token or full profile in a volume that is restricted. Do you point dbt to that profile or copy locally to user directory. What is most secure for single user cluster? Can we make this short lived.
 
 os.environ['DBT_DATABRICKS_SCHEMA'] = dbutils.widgets.get("schema")
 os.environ['DBT_DATABRICKS_CATALOG'] = dbutils.widgets.get("catalog")
+
+print(spark.conf.get("spark.databricks.clusterUsageTags.clusterId"))
 
 
 # COMMAND ----------
@@ -54,7 +70,27 @@ os.environ["dbtselect"] = selection_logic
 
 # COMMAND ----------
 
-# MAGIC %sh dbt run $dbtselect
+# MAGIC %sh sudo mkdir -p /local_disk0/tmp/.dbt ; echo $' 
+# MAGIC dbt_databricks_examples:
+# MAGIC   target: local
+# MAGIC   outputs:
+# MAGIC     #    #run DBT locally from your IDE and execute on a SQL warehouse (https://docs.getdbt.com/reference/warehouse-setups/databricks-setup)
+# MAGIC     #    #Make sure you have pip install dbt-databricks in your local env
+# MAGIC     #    #Run the project locally with:
+# MAGIC     #    #DBT_DATABRICKS_HOST=xxx.cloud.databricks.com  DBT_DATABRICKS_HTTP_PATH=/sql/1.0/warehouses/xxxx DBT_DATABRICKS_TOKEN=dapixxxx dbt run
+# MAGIC     local:
+# MAGIC       type: databricks
+# MAGIC       catalog: field_demos
+# MAGIC       # schema: dv_dev2
+# MAGIC       schema: "{{ env_var(\'DBT_DATABRICKS_SCHEMA\') }}"
+# MAGIC       host: "{{ env_var(\'DBT_DATABRICKS_HOST\') }}"
+# MAGIC       http_path: "{{ env_var(\'DBT_DATABRICKS_HTTP_PATH\') }}" #SQL warehouse Connection details
+# MAGIC       token: '$DBT_DATABRICKS_TOKEN'
+# MAGIC       threads: 3' > /local_disk0/tmp/.dbt/profiles.yml
+
+# COMMAND ----------
+
+# MAGIC %sh dbt run --profiles-dir /local_disk0/tmp/.dbt $dbtselect
 
 # COMMAND ----------
 
@@ -64,26 +100,6 @@ os.environ["dbtselect"] = selection_logic
 # COMMAND ----------
 
 # %sh dbt init --skip-profile-setup
-
-# COMMAND ----------
-
-# %sh mkdir -p .dbt ; echo ' 
-# dbt_databricks_examples:
-#   target: local
-#   outputs:
-#     #    #run DBT locally from your IDE and execute on a SQL warehouse (https://docs.getdbt.com/reference/warehouse-setups/databricks-setup)
-#     #    #Make sure you have pip install dbt-databricks in your local env
-#     #    #Run the project locally with:
-#     #    #DBT_DATABRICKS_HOST=xxx.cloud.databricks.com  DBT_DATABRICKS_HTTP_PATH=/sql/1.0/warehouses/xxxx DBT_DATABRICKS_TOKEN=dapixxxx dbt run
-#     local:
-#       type: databricks
-#       catalog: field_demos
-#       # schema: dv_dev2
-#       schema: "{{ env_var('DBT_DATABRICKS_SCHEMA') }}"
-#       host: "{{ env_var('DBT_DATABRICKS_HOST') }}"
-#       http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH') }}" #SQL warehouse Connection details
-#       token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}" # Personal Access Token (PAT)
-#       threads: 3' > .dbt/profiles.yml
 
 # COMMAND ----------
 
